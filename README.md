@@ -110,11 +110,11 @@ fastapi_ecommerce/
     ```bash
     .venv\Scripts\activate
     ```
-4. Установите зависимости:
+3. Установите зависимости:
    ```bash
    pip install -r requirements.txt
    ```
-5. Создайте файл .env на основе .env.example и отредактируйте его:
+4. Создайте файл .env на основе .env.example и отредактируйте его:
    ```bash
    cp .env.example .env
    ```
@@ -123,7 +123,11 @@ fastapi_ecommerce/
    ```bash
    openssl rand -hex 32
    ```
-6. Запуск через Uvicorn
+5. Примените миграции:
+   ```bash
+   alembic upgrade head
+   ```
+6. Запуск через Uvicorn:
    ```bash
    uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
    ```
