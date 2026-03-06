@@ -60,7 +60,7 @@ async def update_category(category_id: int,
                           db: AsyncSession = Depends(get_async_db), 
                           current_user: UserModel = Depends(get_current_admin)):
     """
-    Обновляет категорию по её ID, если она принадлежит конкретному админу (по admin_id)
+    Обновляет категорию по её ID, если она принадлежит соответствующему админу (по admin_id)
     """
     # Проверяем существование категории по id
     stmt = select(CategoryModel).where(CategoryModel.id == category_id,
