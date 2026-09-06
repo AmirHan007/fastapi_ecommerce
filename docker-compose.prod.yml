@@ -1,0 +1,51 @@
+name: fastapi-ecommerce-prod
+
+services:
+  web:
+    build:
+      # Указываем контекст сборки - текущую директорию проекта
+      context: .
+      # Используем Dockerfile.prod из директории app
+      dockerfile: ./app/Dockerfile.prod
+    # Запускаем ASGI-приложение через сервер приложений Gunicorn с воркерами Uvicorn и портом 8000
+    command: gunicorn app.main:app --workers 4 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000
+    # Монтируем том media_data в /home/fast/media контейнера для загрузки медиафайлов
+    volumes:
+      - media_data:/home/fast/media
+    # Порт не пробрасываем наружу - доступ осуществляется через контейнер nginx
+    # ports:
+    #  - 8000:8000
+    # Запускаем контейнер после старта контейнера базы данных
+    depends_on:
+      - db
+
+  db:
+    # Используем официальный образ PostgreSQL версии 16
+    image: postgres:16
+    # Монтируем том postgres_data в /var/lib/postgresql/data контейнера для хранения данных БД
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    # Задаём переменные окружения для инициализации БД и пользователя
+    environment:
+      - POSTGRES_USER=ecommerce_user
+      - POSTGRES_PASSWORD=xxxxxxxx
+      - POSTGRES_DB=ecommerce_db
+
+  nginx:
+    # Собираем образ nginx из локальной директории nginx
+    build: nginx
+    # Монтируем том media_data в /var/www/media контейнера для доступа к медиафайлам
+    volumes:
+      - media_data:/var/www/media
+    # Открываем порт 80 внутри и снаружи
+    ports:
+      - 80:80
+    # Запускаем контейнер после старта контейнера web-приложения
+    depends_on:
+      - web
+
+volumes:
+  # Определяем том для хранения данных БД
+  postgres_data:
+  # Определяем том для хранения медиафайлов
+  media_data:

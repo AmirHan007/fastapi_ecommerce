@@ -1,0 +1,31 @@
+services:
+  web:
+    build:
+      # Указываем контекст сборки - текущую директорию проекта
+      context: .
+      # Используем Dockerfile из директории app
+      dockerfile: ./app/Dockerfile
+    # Запускаем ASGI-приложение через сервер приложений Uvicorn
+    command: uvicorn app.main:app --host 0.0.0.0
+    # Открываем порт 8000 внутри и снаружи
+    ports:
+      - 8000:8000
+    # Запускаем контейнер после старта контейнера базы данных
+    depends_on:
+      - db
+
+  db:
+    # Используем официальный образ PostgreSQL версии 16
+    image: postgres:16
+    # Монтируем том postgres_data в /var/lib/postgresql/data контейнера для хранения данных БД
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    # Задаём переменные окружения для инициализации БД и пользователя
+    environment:
+      - POSTGRES_USER=ecommerce_user
+      - POSTGRES_PASSWORD=xxxxxxxx
+      - POSTGRES_DB=ecommerce_db
+
+volumes:
+  # Определяем том для хранения данных БД
+  postgres_data:
