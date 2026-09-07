@@ -4,7 +4,7 @@
 Это backend-приложение для интернет-магазина, построенное на современном стеке технологий с упором на асинхронность, безопасность и чёткое разграничение прав доступа.
 
 ## Описание
-Разработал API интернет-магазина на **FastAPI**, используя **асинхронную работу** с базой данных **PostgreSQL** через `AsyncSession`, **SQLAlchemy** и драйвер `asyncpg`. 
+Разработал API интернет-магазина на **FastAPI**, используя **асинхронную работу** с базой данных **PostgreSQL** через `AsyncSession`, **SQLAlchemy** и драйвер `asyncpg`. При желании можно контейнеризировать проект через Docker.
 Проект охватывает ключевые функциональности для управления пользователями и товарами с категориями, а также отзывами для товаров.
 
 ## Стек технологий
@@ -15,11 +15,14 @@
 - **Alembic** — управление миграциями.
 - **JWT** — аутентификация и выдача токенов доступа.
 - **Pydantic** — валидация данных и работа со схемами.
+- **Docker и docker compose** - для контейнеризации сервисов
 
 ## Требования
 
 - Python 3.8+
 - Virtual environment (рекомендуется)
+- OS Linux (Ubuntu)
+- Docker engine
 
 ## Основные возможности
 
@@ -58,44 +61,99 @@
 ```
 fastapi_ecommerce/
 ├── app/
-│ ├── models/                         # Модели SQLAlchemy
-│ │ ├── __init__.py                   
-│ │ ├── users.py                      # Модели пользователей
-│ │ ├── categories.py                 # Модели категории
-│ │ ├── products.py                   # Модели продуктов
-│ │ └── reviews.py                    # Модели отзывов
-│ │
-│ ├── routers/                        # Эндпоинты
-│ │ ├── users.py                      # Для пользователей
-│ │ ├── categories.py                 # Для категорий
-│ │ ├── products.py                   # Для продуктов
-│ │ └── reviews.py                    # Для отзывов
-│ │
-│ ├── migrations/                     # Миграции Alembic
-│ │ ├── versions/                     # Версии миграций
-│ │ │ ├── 2f57...
-│ │ │ ├── 6b91...
-│ │ │ ├── 8641...
-│ │ │ └── d29b...
-│ │ ├── env.py                        # Настройка миграций
-│ │ ├── README
-│ │ └── script.py.mako
-│ │
-│ ├── __init__.py  
-│ ├── auth.py                         # JWT регистрация и аутентификация
-│ ├── config.py                       # Конфигурация
-│ ├── database.py                     # Подключение к БД
-│ ├── db_depends.py                   # Зависимости для БД
-│ ├── main.py                         # Точка входа
-│ └── schemas.py                      # Pydantic схемы
-│                  
+│   ├── models/                       # Модели SQLAlchemy
+│   │   ├── __init__.py                   
+│   │   ├── users.py                  # Модели пользователей
+│   │   ├── categories.py             # Модели категории
+│   │   ├── products.py               # Модели продуктов
+│   │   └── reviews.py                # Модели отзывов
+│   │
+│   ├── routers/                      # Эндпоинты
+│   │   ├── users.py                  # Для пользователей
+│   │   ├── categories.py             # Для категорий
+│   │   ├── products.py               # Для продуктов
+│   │   └── reviews.py                # Для отзывов
+│   │
+│   ├── migrations/                   # Миграции Alembic
+│   │   ├── versions/                 # Версии миграций
+│   │   │   ├── 2f57...
+│   │   │   ├── 6b91...
+│   │   │   ├── 8641...
+│   │   │   └── d29b...
+│   │   ├── env.py                    # Настройка миграций
+│   │   ├── README
+│   │   └── script.py.mako
+│   │
+│   ├── __init__.py  
+│   ├── auth.py                       # JWT регистрация и аутентификация
+│   ├── config.py                     # Конфигурация
+│   ├── database.py                   # Подключение к БД
+│   ├── db_depends.py                 # Зависимости для БД
+│   ├── main.py                       # Точка входа
+│   ├── Dockerfile                    # Докерфайл для разработки
+│   ├── Dockerfile.prod               # Докерфайл для продакшена
+│   └── schemas.py                    # Pydantic схемы
+│
+├── media/
+│   └── products/
+│       └── 31156060-7e2c-41e4-a
+│
+├── nginx/
+│   ├── Dockerfile                    # Докерфайл для nginx
+│   └── fastapi_ecommerce.conf        # Конфиг для nginx
+│
 ├── .env.example                      # Пример переменных окружения
 ├── .gitignore                        # Исключенные файлы и директории
+├── docker-compose.prod.yml           # Для продакшена     
+├── docker-compose.yml                # Для разработки
+├── README.md                         # README файл
 ├── alembic.ini                       # Файл инициализации для Alembic
 └── requirements.txt                  # Необходимые зависимости
 ```
+## Запуск с использованием Docker и Nginx
+Проект полностью контейнеризирован. В папке app/ находятся 2 Docker-файла:
+- **`Dockerfile`** — для режима разработки (используется `uvicorn`).
+- **`Dockerfile.prod`** — для продакшена (используется связка `Gunicorn` + `UvicornWorker`).
 
-## Установка и запуск
+В корне проекта расположены 2 docker-compose файла :
+- **`docker-compose.yml`** — поднимает контейнер с приложением (без Nginx) и базу данных. Порт 8000 пробрасывается на хост.
+- **`docker-compose.prod.yml`** — поднимает приложение, базу данных и **Nginx** в качестве обратного прокси. Порт 80 пробрасывается на хост, а приложение и база общаются внутри изолированной сети Docker.
+
+**Особенности продакшен-сборки:**
+- Nginx собирается из отдельной папки `nginx/` с собственным `Dockerfile` и конфигом `fastapi_ecommerce.conf`.
+- Конфиг Nginx:
+  - Проксирует все запросы на бэкенд (`web:8000`).
+  - Отдаёт медиафайлы напрямую из папки `/var/www/media/` (том `media_data` монтируется как к приложению, так и к Nginx).
+- Тома:
+  - `postgres_data` — для хранения базы данных.
+  - `media_data` — для загрузок (медиафайлов).
+- Приложение запускается через `gunicorn` с 4 воркерами `uvicorn.workers.UvicornWorker` и привязано к порту `8000` (внутренний, не пробрасывается наружу).
+
+### Команды для запуска
+
+- Режим разработки (без Nginx, прямой доступ через порт 8000)
+```bash
+docker compose -f docker-compose.yml up -d
+```
+
+- Режим продакшена (с Nginx, доступ через порт 80)
+```bash
+docker compose -f docker-compose.prod.yml up -d
+```
+
+Для применения миграций внутри контейнера выполните (имя сервиса в обоях compose-файлах — web):
+
+- Для разработки:
+```bash
+docker compose exec web alembic upgrade head
+```
+
+- Для продакшен-версии с отдельным compose-файлом:
+```bash
+docker compose -f docker-compose.prod.yml exec web alembic upgrade head
+```
+
+## Установка и запуск без Docker и Nginx
 
 1. Клонируйте репозиторий:
    ```bash
@@ -107,10 +165,6 @@ fastapi_ecommerce/
     ```bash
     source .venv/bin/activate
     ```
-  - Для Windows:
-    ```bash
-    .venv\Scripts\activate
-    ```
 3. Установите зависимости:
    ```bash
    pip install -r requirements.txt
@@ -119,8 +173,8 @@ fastapi_ecommerce/
    ```bash
    cp .env.example .env
    ```
-   Измените DATABASE_URL и SECRET_KEY.
-   Для создания своего `SECRET_KEY` надо:
+   В .env измените DATABASE_URL и SECRET_KEY.
+   Для создания своего `SECRET_KEY` надо выполнить:
    ```bash
    openssl rand -hex 32
    ```
